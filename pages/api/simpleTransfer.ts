@@ -17,9 +17,8 @@ export default async function handler(
     return get(res)
   } else if (req.method === "POST") {
     return await post(req, res)
-  } else {
-    return res.status(405).json({ error: "Method not allowed" })
   }
+  res.status(405).json({ error: "Method not allowed" })
 }
 
 // "res" is Text and Image that displays when wallet first scans
@@ -83,9 +82,7 @@ async function post(req: NextApiRequest, res: NextApiResponse) {
     const message = "Approve to transfer 0.001 Devnet SOL"
 
     res.status(200).json({ transaction: base64, message })
-    return
   } catch (error) {
     res.status(500).json({ error: "error creating transaction" })
-    return
   }
 }

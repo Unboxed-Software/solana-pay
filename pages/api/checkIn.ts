@@ -27,9 +27,8 @@ export default async function handler(
     return get(res)
   } else if (req.method === "POST") {
     return await post(req, res)
-  } else {
-    return res.status(405).json({ error: "Method not allowed" })
   }
+  res.status(405).json({ error: "Method not allowed" })
 }
 
 function get(res: NextApiResponse) {
@@ -64,9 +63,9 @@ async function post(req: NextApiRequest, res: NextApiResponse) {
     let error = err as any
     if (error.message) {
       res.status(200).json({ transaction: "", message: error.message })
-    } else {
-      res.status(500).json({ error: "error creating transaction" })
+      return
     }
+    res.status(500).json({ error: "error creating transaction" })
   }
 }
 
@@ -146,12 +145,7 @@ function verifyCorrectLocation(
   const lastLocation = locations.find(
     (location) => location.key.toString() === userState.lastLocation.toString()
   )
-
-  if (!lastLocation || currentLocation.index !== lastLocation.index + 1) {
-    return false
-  } else {
-    return true
-  }
+  return !(!lastLocation || currentLocation.index !== lastLocation.index + 1)
 }
 
 async function createInitUserInstruction(
