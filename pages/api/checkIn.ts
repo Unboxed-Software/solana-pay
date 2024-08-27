@@ -145,7 +145,9 @@ function verifyCorrectLocation(
   const lastLocation = locations.find(
     (location) => location.key.toString() === userState.lastLocation.toString()
   )
-  return !(!lastLocation || currentLocation.index !== lastLocation.index + 1)
+
+  const locationHasChanged = !lastLocation || currentLocation.index !== lastLocation.index + 1
+  return !locationHasChanged
 }
 
 async function createInitUserInstruction(
