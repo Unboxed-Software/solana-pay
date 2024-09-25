@@ -1,14 +1,14 @@
 "use client"; // This is needed for client-side components in the app directory
+
 import { Flex, Heading, VStack } from "@chakra-ui/react";
-import { useRouter } from "next/navigation"; // Updated for new Next.js navigation
+import { useParams } from "next/navigation"; // Correct hook for accessing params in the App Router
 import { Keypair } from "@solana/web3.js";
 import { useEffect, useRef, useState } from "react";
 import { createQRCode } from "@/utils/createQrCode/checkIn";
 import { checkTransaction } from "@/utils/checkTransaction";
 
 const QrCodePage = () => {
-  const router = useRouter();
-  const id = router.query?.id as string; // Get the `id` parameter from the URL
+  const { id } = useParams(); // Get the `id` parameter from the URL
 
   const qrRef = useRef<HTMLDivElement>(null);
   const [reference, setReference] = useState(Keypair.generate().publicKey);
@@ -40,3 +40,4 @@ const QrCodePage = () => {
 };
 
 export default QrCodePage;
+

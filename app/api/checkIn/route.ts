@@ -122,7 +122,7 @@ function verifyCorrectLocation(userState: UserState | null, currentLocation: Loc
   }
 
   const lastLocation = locations.find(
-    (location) => location.key.toString() === userState.lastLocation.toString()
+    (location: any) => location.key.toString() === userState.lastLocation.toString()
   );
 
   return lastLocation ? currentLocation.index === lastLocation.index + 1 : false;

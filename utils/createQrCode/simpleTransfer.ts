@@ -11,6 +11,8 @@ export const useCreateQRCode = (reference: PublicKey) => {
     // Build the API URL with the `reference` parameter
     const params = new URLSearchParams();
     params.append("reference", reference.toString());
+
+    // Constructing the API URL dynamically based on the current site origin
     const apiUrl = `${window.location.origin}/api/simpleTransfer?${params.toString()}`;
 
     // Encode the API URL into a QR code
@@ -29,3 +31,4 @@ export const useCreateQRCode = (reference: PublicKey) => {
 
   return qrRef;
 };
+

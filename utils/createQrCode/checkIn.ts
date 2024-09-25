@@ -1,14 +1,14 @@
 import { createQR, encodeURL, TransactionRequestURLFields } from "@solana/pay";
 import { PublicKey } from "@solana/web3.js";
 import { RefObject } from "react";
-import { useRouter } from 'next/navigation';
+import { Router } from 'next/navigation'; // Ensure `Router` is passed from a component
 
 export const createQRCode = (
   qrRef: RefObject<HTMLDivElement>,
   reference: PublicKey,
-  id: string
+  id: string,
+  router: Router // Pass the router as a parameter from your component
 ) => {
-  const router = useRouter(); // Assuming you want to use next/navigation for routing, adjust if using older methods
   
   // Create a new URLSearchParams object with the `reference` and `id` parameters
   const searchParams = new URLSearchParams([
@@ -36,5 +36,8 @@ export const createQRCode = (
   }
 
   // If you need to handle navigation or other side effects after QR generation
-  router.push(apiUrl); // Example usage, modify based on your routing needs
+  if (router) {
+    router.push(apiUrl.toString()); // Example usage, modify based on your routing needs
+  }
 };
+

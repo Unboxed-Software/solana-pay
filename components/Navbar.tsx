@@ -7,7 +7,7 @@ import {
   IconButton,
 } from "@chakra-ui/react";
 import { HamburgerIcon } from "@chakra-ui/icons";
-import { locations } from "../utils/locations";
+import { locations } from "@/utils/locations";
 import Link from "next/link";
 
 // Define the interface for the location object if it's not defined elsewhere
