@@ -1,51 +1,35 @@
-import { NextApiRequest, NextApiResponse } from "next"
-import {
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
-  Keypair,
-} from "@solana/web3.js"
-import { locationAtIndex, Location, locations } from "../../utils/locations"
-import { connection, gameId, program } from "../../utils/programSetup"
+import { NextResponse } from 'next/server';
+import { PublicKey, Transaction, TransactionInstruction, Keypair } from '@solana/web3.js';
+import { locationAtIndex, Location, locations } from '@/utils/locations'; // Updated the path to align with app structure
+import { connection, gameId, program } from '@/utils/programSetup';
 
-const eventOrganizer = getEventOrganizer()
+// Retrieve the event organizer keypair
+function getEventOrganizer(): Keypair {
+  const eventOrganizerSecret = process.env.EVENT_ORGANIZER;
+  if (!eventOrganizerSecret) throw new Error('EVENT_ORGANIZER not found');
 
-function getEventOrganizer() {
-  const eventOrganizer = JSON.parse(
-    process.env.EVENT_ORGANIZER ?? ""
-  ) as number[]
-  if (!eventOrganizer) throw new Error("EVENT_ORGANIZER not found")
-
-  return Keypair.fromSecretKey(Uint8Array.from(eventOrganizer))
+  const eventOrganizer = JSON.parse(eventOrganizerSecret) as number[];
+  return Keypair.fromSecretKey(Uint8Array.from(eventOrganizer));
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method === "GET") {
-    return get(res)
-  } else if (req.method === "POST") {
-    return await post(req, res)
-  } else {
-    return res.status(405).json({ error: "Method not allowed" })
-  }
+const eventOrganizer = getEventOrganizer();
+
+// GET method handler
+export async function GET() {
+  return NextResponse.json({
+    label: 'Scavenger Hunt!',
+    icon: 'https://solana.com/src/img/branding/solanaLogoMark.svg',
+  });
 }
 
-function get(res: NextApiResponse) {
-  res.status(200).json({
-    label: "Scavenger Hunt!",
-    icon: "https://solana.com/src/img/branding/solanaLogoMark.svg",
-  })
-}
-
-async function post(req: NextApiRequest, res: NextApiResponse) {
-  const { account } = req.body
-  const { reference, id } = req.query
+// POST method handler
+export async function POST(req: Request) {
+  const body = await req.json();
+  const { account } = body;
+  const { reference, id } = new URL(req.url).searchParams;
 
   if (!account || !reference || !id) {
-    res.status(400).json({ error: "Missing required parameter(s)" })
-    return
+    return NextResponse.json({ error: 'Missing required parameter(s)' }, { status: 400 });
   }
 
   try {
@@ -53,118 +37,108 @@ async function post(req: NextApiRequest, res: NextApiResponse) {
       new PublicKey(account),
       new PublicKey(reference),
       id.toString()
-    )
+    );
 
-    res.status(200).json({
-      transaction: transaction,
+    return NextResponse.json({
+      transaction,
       message: `You've found location ${id}!`,
-    })
-  } catch (err) {
-    console.log(err)
-    let error = err as any
-    if (error.message) {
-      res.status(200).json({ transaction: "", message: error.message })
-    } else {
-      res.status(500).json({ error: "error creating transaction" })
-    }
+    });
+  } catch (err: any) {
+    console.log(err);
+    return NextResponse.json(
+      { transaction: '', message: err.message || 'Error creating transaction' },
+      { status: 500 }
+    );
   }
 }
 
+// Function to build the transaction
 async function buildTransaction(
   account: PublicKey,
   reference: PublicKey,
   id: string
 ): Promise<string> {
-  const userState = await fetchUserState(account)
+  const userState = await fetchUserState(account);
 
-  const currentLocation = locationAtIndex(new Number(id).valueOf())
+  const currentLocation = locationAtIndex(Number(id));
 
   if (!currentLocation) {
-    throw { message: "Invalid location id" }
+    throw { message: 'Invalid location id' };
   }
 
   if (!verifyCorrectLocation(userState, currentLocation)) {
-    throw { message: "You must visit each location in order!" }
+    throw { message: 'You must visit each location in order!' };
   }
 
-  const { blockhash, lastValidBlockHeight } =
-    await connection.getLatestBlockhash()
+  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
 
   // Create a new transaction object
   const transaction = new Transaction({
     feePayer: account,
     blockhash,
     lastValidBlockHeight,
-  })
+  });
 
   if (!userState) {
-    transaction.add(await createInitUserInstruction(account))
+    transaction.add(await createInitUserInstruction(account));
   }
 
-  transaction.add(
-    await createCheckInInstruction(account, reference, currentLocation)
-  )
-
-  transaction.partialSign(eventOrganizer)
+  transaction.add(await createCheckInInstruction(account, reference, currentLocation));
+  transaction.partialSign(eventOrganizer);
 
   const serializedTransaction = transaction.serialize({
     requireAllSignatures: false,
-  })
+  });
 
-  const base64 = serializedTransaction.toString("base64")
-
-  return base64
+  const base64 = serializedTransaction.toString('base64');
+  return base64;
 }
 
+// Interface for user state
 interface UserState {
-  user: PublicKey
-  gameId: PublicKey
-  lastLocation: PublicKey
+  user: PublicKey;
+  gameId: PublicKey;
+  lastLocation: PublicKey;
 }
 
+// Function to fetch user state
 async function fetchUserState(account: PublicKey): Promise<UserState | null> {
   const userStatePDA = PublicKey.findProgramAddressSync(
     [gameId.toBuffer(), account.toBuffer()],
     program.programId
-  )[0]
+  )[0];
 
   try {
-    return await program.account.userState.fetch(userStatePDA)
+    return await program.account.userState.fetch(userStatePDA);
   } catch {
-    return null
+    return null;
   }
 }
 
-function verifyCorrectLocation(
-  userState: UserState | null,
-  currentLocation: Location
-): boolean {
+// Verify that the user is visiting the correct location in order
+function verifyCorrectLocation(userState: UserState | null, currentLocation: Location): boolean {
   if (!userState) {
-    return currentLocation.index === 1
+    return currentLocation.index === 1;
   }
 
   const lastLocation = locations.find(
     (location) => location.key.toString() === userState.lastLocation.toString()
-  )
+  );
 
-  if (!lastLocation || currentLocation.index !== lastLocation.index + 1) {
-    return false
-  } else {
-    return true
-  }
+  return lastLocation ? currentLocation.index === lastLocation.index + 1 : false;
 }
 
-async function createInitUserInstruction(
-  account: PublicKey
-): Promise<TransactionInstruction> {
+// Create an instruction to initialize a user
+async function createInitUserInstruction(account: PublicKey): Promise<TransactionInstruction> {
   const initializeInstruction = await program.methods
     .initialize(gameId)
     .accounts({ user: account })
-    .instruction()
+    .instruction();
 
-  return initializeInstruction
+  return initializeInstruction;
 }
 
+// Create an instruction to check in at a location
 async function createCheckInInstruction(
   account: PublicKey,
   reference: PublicKey,
@@ -176,13 +150,13 @@ async function createCheckInInstruction(
       user: account,
       eventOrganizer: eventOrganizer.publicKey,
     })
-    .instruction()
+    .instruction();
 
   checkInInstruction.keys.push({
     pubkey: reference,
     isSigner: false,
     isWritable: false,
-  })
+  });
 
-  return checkInInstruction
+  return checkInInstruction;
 }
