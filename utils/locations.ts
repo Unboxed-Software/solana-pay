@@ -1,30 +1,30 @@
-import { Keypair, PublicKey } from "@solana/web3.js"
+import { Keypair, PublicKey } from "@solana/web3.js";
 
+// Define the interface for Location
 interface Location {
-  index: number
-  key: PublicKey
+  index: number;
+  key: PublicKey;
 }
-// Export an array of locations created by the createLocationsArray function
-export const locations: Location[] = createLocationsArray(3)
 
+// Use a const assertion to ensure the array is readonly after initialization
+export const locations: readonly Location[] = createLocationsArray(3);
+
+// Function to find a location by index
 export function locationAtIndex(index: number): Location | undefined {
-  return locations.find((l) => l.index === index)
+  return locations.find((l) => l.index === index);
 }
 
-// Function that creates an array of locations with a specified number of locations
+// Function to create an array of locations
 function createLocationsArray(numLocations: number): Location[] {
-  // Initialize empty array
-  let locations = []
+  const locations = [];
 
-  // Loop through the specified number of locations
   for (let i = 1; i <= numLocations; i++) {
-    // Generate a new public key and push a new location object to the array
+    const keypair = Keypair.generate();
     locations.push({
       index: i,
-      key: Keypair.generate().publicKey,
-    })
+      key: keypair.publicKey,
+    });
   }
 
-  // Return the array of locations
-  return locations
+  return locations;
 }

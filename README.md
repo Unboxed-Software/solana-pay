@@ -12,11 +12,15 @@ yarn dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `app/api/hello/route.ts`.
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+Pages have moved to `app/page.tsx` or `app/[dynamic_route_name]/page.tsx` for dynamic routes.
+
+API Routes are now under `app/api`. For instance, `app/api/hello/route.ts` would handle requests to `/api/hello`.
+
+Files in this directory are treated as [API routes]([https://nextjs.org/docs/app/building-your-application/routing/defining-routes]) instead of React pages.
 
 ## Learn More
 
